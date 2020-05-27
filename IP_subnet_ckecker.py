@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from ipaddress import ip_address,ip_network
 import argparse
 
