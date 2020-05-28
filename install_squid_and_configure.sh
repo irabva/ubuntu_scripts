@@ -1,4 +1,19 @@
 #!/bin/bash
+help()
+{
+echo "This script install and configure squid"
+echo "Example:"
+echo "install_squid_and_configure.sh --localnet 192.168.0.0/24 --listen 192.168.0.10 --port 3128 --allow-http"
+echo
+echo "Options:"
+echo "--listen	Listen on this IP address. By default is 0.0.0.0"
+echo "--port		Listen on this port. By default is 3128"
+echo "--localnet	Traffic is allowed for host tfom this network. REQUIRED!"
+echo "--allow-http	If this option is set non SSL ports are allowed"
+echo "--help		Show help"
+echo
+}
+
 if [ $EUID != 0 ]
 then
 	echo "Please run as root. Use sudo."
@@ -11,14 +26,15 @@ http_allowed=$false
 localnet=""
 
 if [[ $# -eq 0 ]]; then
-    echo "No parameters found. "
+    echo "No parameters were found. "
     exit 1
 fi
 
 while [ -n "$1" ]
 do
 	case "$1" in
-		--help) echo "There will be help" ;;
+		--help) help
+			exit 0 ;;
 		--listen) if [ $($(pwd)/IP_subnet_ckecker.py -a $2) =  "False" ]
 			then
 				echo "$2 is not IP Address"
@@ -58,7 +74,7 @@ fi
 
 if ! [[ $listen = "0.0.0.0" ]]
 then
-if ! [[ $( ip a ) =~ .*"$listen".* ]]
+if ! [[ $( ip a ) =~ .*[^0-9]"$listen"[^0-9].* ]]
 then
 	echo "$listen is not your IP Address"
         exit 1
@@ -80,6 +96,12 @@ fi
 echo "Installing squid..."
 apt update
 apt install squid -y
+
+if ! [ -e /etc/squid/squid.conf ]
+then
+	echo "Something went wrong. There is no file etc/squid/squid.conf"
+	exit 1
+fi
 
 echo "Creating squid.conf backup..."
 cp /etc/squid/squid.conf /etc/squid/squid.conf.backup
